@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicaciones Combinadas</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #888;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+        h1 {
+            color: white; 
+            font-size: 1.5rem; /* Tamaño de título mediano */
+        }
+        .logo {
+            margin: 20px;
+            max-width: 120px; /* Reducir el tamaño del logo */
+            height: auto;
+            display: block;
+        }
+        .section {
+            margin: 20px;
+            padding: 15px; /* Padding reducido */
+            background-color: white;
+            border-radius: 8px;
+            max-width: 800px; /* Ancho máximo para las secciones */
+            margin-left: auto; /* Centrar horizontalmente */
+            margin-right: auto; /* Centrar horizontalmente */
+        }
+        textarea {
+            width: 100%;
+            height: 80px; /* Altura reducida */
+            margin-bottom: 10px;
+            padding: 8px; /* Padding reducido */
+            font-size: 0.9rem; /* Tamaño de fuente mediano */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px; /* Padding reducido */
+            font-size: 0.9rem; /* Tamaño de fuente mediano en la tabla */
+        }
+        th {
+            background-color: #FF0000;
+            color: white;
+        }
+        button {
+            margin-top: 10px;
+            padding: 8px 12px; /* Padding reducido */
+            font-size: 0.9rem; /* Tamaño de fuente mediano en botones */
+            cursor: pointer;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<a href="https://www.claro.com" target="_blank">
+    <img src="C:\Users\DELL\Desktop\Prueba\logo.png" alt="Logo Claro" class="logo">
+</a>
+
+<div class="section" id="generadorTabla">
+    <h1>Generador de Levantamientos</h1>
+    <textarea id="inputData1" placeholder="Pega tus datos aquí..."></textarea>
+    <button onclick="generateTable1()">Generar Levantamiento</button>
+    <button onclick="copyTable('resultTable1')">Copiar Tabla</button>
+    <button onclick="limpiarTexto('inputData1')">Limpiar</button>
+    <table id="resultTable1" style="display: none;">
+        <thead>
+            <tr>
+                <th>Equipo</th>
+                <th>Interfaz</th>
+                <th>Condición</th>
+                <th>Conecta a</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody1"></tbody>
+    </table>
+</div>
+
+<div class="section" id="registroEquipos">
+    <h1>Registro de Equipos y Clientes</h1>
+    <input type="text" id="equipo" placeholder="Nombre del Equipo" required>
+    <input type="number" id="cantidad" placeholder="Cantidad de Clientes" required min="1">
+    <button onclick="agregarFila()">Agregar</button>
+    <button class="btn-danger" onclick="limpiarDatos()">Limpiar</button>
+    <button onclick="copyTable('tabla')">Copiar Tabla</button>
+    <table id="tabla">
+        <thead>
+            <tr>
+                <th>Equipo</th>
+                <th>Cantidad de Clientes</th>
+            </tr>
+        </thead>
+        <tbody id="tablaBody"></tbody>
+        <tfoot>
+            <tr>
+                <td><strong>Total de Clientes:</strong></td>
+                <td id="totalClientes">0</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="section" id="generadorTabla3">
+    <h1>Generador de Tabla</h1>
+    <textarea id="inputData2" placeholder="Ingresa los datos en formato: Equipo, Localidad, Id Celda (una fila por línea)"></textarea>
+    <button onclick="generateTable2()">Generar Tabla</button>
+    <button onclick="copyTable('resultTable2')">Copiar Tabla</button>
+    <button onclick="limpiarTexto('inputData2')">Limpiar</button>
+    <table id="resultTable2" style="display: none;">
+        <thead>
+            <tr>
+                <th>Equipo</th>
+                <th>Localidad</th>
+                <th>Id Celda</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody2"></tbody>
+    </table>
+</div>
+
+<script>
+function generateTable1() {
+    const input = document.getElementById('inputData1').value.trim();
+    const lines = input.split('\n');
+    const tableBody = document.getElementById('tableBody1');
+    tableBody.innerHTML = '';
+
+    for (const line of lines) {
+        const data = line.split(/\s+/);
+        if (data.length >= 8) {
+            const equipo = data[0];
+            const estado = data[2] || 'Desconocido';
+            const interfazMatch = line.match(/If Name=(.+?) /);
+            const conectaMatch = line.match(/Conectado a (.+?)( |$)/);
+            const interfaz = interfazMatch ? interfazMatch[1].trim() : 'Desconocido';
+            const conectaA = conectaMatch ? conectaMatch[1].trim() : 'Desconocido';
+
+            const row = ` 
+                <tr>
+                    <td>${equipo}</td>
+                    <td>${interfaz}(10G)</td>
+                    <td>${estado}</td>
+                    <td>${conectaA}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        }
+    }
+
+    document.getElementById('resultTable1').style.display = tableBody.innerHTML ? 'table' : 'none';
+    if (!tableBody.innerHTML) alert('No se generaron filas. Verifica el formato de entrada.');
+}
+
+function generateTable2() {
+    const input = document.getElementById('inputData2').value.trim();
+    const lines = input.split('\n');
+    const tableBody = document.getElementById('tableBody2');
+    tableBody.innerHTML = '';
+
+    for (const line of lines) {
+        const data = line.split(',');
+        if (data.length === 3) {
+            const equipo = data[0].trim();
+            const localidad = data[1].trim();
+            const idCelda = data[2].trim();
+
+            const row = `
+                <tr>
+                    <td>${equipo}</td>
+                    <td>${localidad}</td>
+                    <td>${idCelda}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        }
+    }
+
+    document.getElementById('resultTable2').style.display = tableBody.innerHTML ? 'table' : 'none';
+    if (!tableBody.innerHTML) alert('No se generaron filas. Verifica el formato de entrada.');
+}
+
+function copyTable(tableId) {
+    const table = document.getElementById(tableId);
+    const range = document.createRange();
+    range.selectNode(table);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert('Tabla copiada al portapapeles!');
+    window.getSelection().removeAllRanges();
+}
+
+let total = 0;
+
+function agregarFila() {
+    const equipo = document.getElementById('equipo').value;
+    const cantidad = parseInt(document.getElementById('cantidad').value, 10);
+    
+    if (!equipo || isNaN(cantidad)) {
+        alert("Por favor, complete todos los campos.");
+        return;
+    }
+
+    const tablaBody = document.getElementById('tablaBody');
+    const nuevaFila = document.createElement('tr');
+    
+    nuevaFila.innerHTML = `<td>${equipo}</td><td>${cantidad}</td>`;
+    tablaBody.appendChild(nuevaFila);
+    
+    total += cantidad;
+    document.getElementById('totalClientes').textContent = total;
+
+    document.getElementById('equipo').value = '';
+    document.getElementById('cantidad').value = '';
+}
+
+function limpiarDatos() {
+    document.getElementById('tablaBody').innerHTML = '';
+    total = 0;
+    document.getElementById('totalClientes').textContent = total;
+    document.getElementById('equipo').value = '';
+    document.getElementById('cantidad').value = '';
+}
+
+function limpiarTexto(textareaId) {
+    document.getElementById(textareaId).value = '';
+}
+</script>
+
+</body>
+</html>
