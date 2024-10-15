@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicaciones Combinadas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #888;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        h1 {
+            color: white; 
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0 0 0 10px;
+        }
+        .logo {
+            max-width: 120px;
+            height: auto;
+        }
+        .section {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            max-width: 800px;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin-bottom: 10px;
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        th {
+            background-color: #FF0000;
+            color: white;
+        }
+        button {
+            margin-top: 10px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .footer {
+            background-color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="https://www.claro.com" target="_blank">
+        <img src="Logo.png" alt="Logo Claro" class="logo">
+    </a>
+    <h1>Data-Collection</h1>
+</div>
+
+<div class="section" id="generadorTabla">
+    <h1>Generador de Levantamientos</h1>
+    <textarea id="inputData1" placeholder="Pega tus datos aquí..."></textarea>
+    <button onclick="generateTable1()">Generar Levantamiento</button>
+    <button onclick="copyTable('resultTable1')">Copiar Tabla</button>
+    <button onclick="limpiarTexto('inputData1')">Limpiar</button>
+    <table id="resultTable1" style="display: none;">
+        <thead>
+            <tr>
+                <th>Equipo</th>
+                <th>Interfaz</th>
+                <th>Condición</th>
+                <th>Conecta a</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody1"></tbody>
+    </table>
+</div>
+
+<div class="section" id="registroEquipos">
+    <h1>Registro de Equipos y Clientes</h1>
+    <input type="text" id="equipo" placeholder="Nombre del Equipo" required>
+    <input type="number" id="cantidad" placeholder="Cantidad de Clientes" required min="1">
+    <button onclick="agregarFila()">Agregar</button>
+    <button class="btn-danger" onclick="limpiarDatos()">Limpiar</button>
+    <button onclick="copyTable('tabla')">Copiar Tabla</button>
+    <table id="tabla">
+        <thead>
+            <tr>
+                <th>Equipo</th>
+                <th>Cantidad de Clientes</th>
+            </tr>
+        </thead>
+        <tbody id="tablaBody"></tbody>
+        <tfoot>
+            <tr>
+                <td><strong>Total de Clientes:</strong></td>
+                <td id="totalClientes">0</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="section" id="filtrarExcel">
+    <h1>Cargar y Filtrar Excel</h1>
+    <input type="file" id="fileInput" accept=".xlsx, .xls" />
+    <input type="text" id="cidInput" placeholder="Filtrar por CID o Nombre" />
+    <button id="filterButton">Filtrar</button>
+    <button id="clearFilterButton">Limpiar Resultados</button>
+    <button onclick="copyTable('resultTable')">Copiar Tabla</button>
+    <table id="resultTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>CID</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div class="footer">
+    Desarrollado por Josué Morillo<br>
+    Versión 1.0
+</div>
+
+<script>
+let total = 0;
+
+function generateTable1() {
+    const input = document.getElementById('inputData1').value.trim();
+    const lines = input.split('\n');
+    const tableBody = document.getElementById('tableBody1');
+    tableBody.innerHTML = '';
+
+    for (const line of lines) {
+        const data = line.split(/\s+/);
+        if (data.length >= 8) {
+            const equipo = data[0];
+            const estado = 'down';
+            const interfazMatch = line.match(/If Name=(.+?) /);
+            const conectaMatch = line.match(/Conectado a (.+?)( |$)/);
+            const interfaz = interfazMatch ? interfazMatch[1].trim() : 'Desconocido';
+            const conectaA = conectaMatch ? conectaMatch[1].trim() : 'Desconocido';
+
+            const row = ` 
+                <tr>
+                    <td>${equipo}</td>
+                    <td>${interfaz}(10G)</td>
+                    <td>${estado}</td>
+                    <td>${conectaA}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        }
+    }
+
+    document.getElementById('resultTable1').style.display = tableBody.innerHTML ? 'table' : 'none';
+    if (!tableBody.innerHTML) alert('No se generaron filas. Verifica el formato de entrada.');
+}
+
+function agregarFila() {
+    const equipo = document.getElementById('equipo').value;
+    const cantidad = parseInt(document.getElementById('cantidad').value, 10);
+    
+    if (!equipo || isNaN(cantidad)) {
+        alert("Por favor, complete todos los campos.");
+        return;
+    }
+
+    const tablaBody = document.getElementById('tablaBody');
+    const nuevaFila = document.createElement('tr');
+    
+    nuevaFila.innerHTML = `<td>${equipo}</td><td>${cantidad}</td>`;
+    tablaBody.appendChild(nuevaFila);
+    
+    total += cantidad;
+    document.getElementById('totalClientes').textContent = total;
+
+    document.getElementById('equipo').value = '';
+    document.getElementById('cantidad').value = '';
+}
+
+function limpiarDatos() {
+    document.getElementById('tablaBody').innerHTML = '';
+    total = 0;
+    document.getElementById('totalClientes').textContent = total;
+    document.getElementById('equipo').value = '';
+    document.getElementById('cantidad').value = '';
+}
+
+function limpiarTexto(textareaId) {
+    document.getElementById(textareaId).value = '';
+}
+
+let workbook;
+
+document.getElementById('fileInput').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        workbook = XLSX.read(data, { type: 'array' });
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
+document.getElementById('filterButton').addEventListener('click', () => {
+    const cidValue = document.getElementById('cidInput').value.trim().toLowerCase();
+    const tbody = document.getElementById('resultTable').querySelector('tbody');
+    tbody.innerHTML = '';  // Limpiar resultados anteriores
+    let found = false;
+
+    if (workbook) {
+        const sheetNames = workbook.SheetNames;
+        sheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet);
+            json.forEach(row => {
+                const cidMatch = row.CID && row.CID.toString().toLowerCase().includes(cidValue);
+                const nameMatch = row.Name && row.Name.toString().toLowerCase().includes(cidValue);
+
+                if ((cidMatch || nameMatch) && !found) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${row.CID}</td><td>${row.Name}</td>`;
+                    tbody.appendChild(tr);
+                    found = true;
+                }
+            });
+        });
+    }
+
+    document.getElementById('resultTable').style.display = found ? 'table' : 'none';
+});
+
+document.getElementById('clearFilterButton').addEventListener('click', () => {
+    document.getElementById('cidInput').value = '';
+    const tbody = document.getElementById('resultTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    document.getElementById('resultTable').style.display = 'none';
+});
+
+function copyTable(tableId) {
+    const table = document.getElementById(tableId);
+    const range = document.createRange();
+    range.selectNodeContents(table);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand('copy');
+    alert('Tabla copiada al portapapeles!');
+}
+</script>
+
+</body>
+</html>
